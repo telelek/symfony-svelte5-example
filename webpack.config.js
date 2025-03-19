@@ -1,4 +1,5 @@
 const Encore = require('@symfony/webpack-encore');
+const path = require('path');
 
 // Manually configure the runtime environment if not already configured yet by the "encore" command.
 // It's useful when you use tools that rely on webpack.config.js file.
@@ -25,7 +26,16 @@ Encore
     // When enabled, Webpack "splits" your files into smaller pieces for greater optimization.
     .splitEntryChunks()
 
-    .enableSvelte()
+    .enableSvelte({
+        // Svelte 5 configuration
+        compilerOptions: {
+            runes: true, // Enable Svelte 5 runes
+        },
+        options: {
+            emitCss: true, // Extract CSS into separate files
+            hotReload: !Encore.isProduction(), // Enable hot reload in development
+        }
+    })
 
     // enables the Symfony UX Stimulus bridge (used in assets/bootstrap.js)
     .enableStimulusBridge('./assets/controllers.json')
@@ -58,24 +68,11 @@ Encore
         config.corejs = '3.38';
     })
 
-    // enables Sass/SCSS support
-    //.enableSassLoader()
-
-    // uncomment if you use TypeScript
     .enableTypeScriptLoader(options => {
-        // options.appendTsSuffixTo = [/\.svelte$/];
-        // options.transpileOnly = true;
+        options.appendTsSuffixTo = [/\.svelte$/];
+        options.transpileOnly = true;
     })
 
-    // uncomment if you use React
-    //.enableReactPreset()
-
-    // uncomment to get integrity="..." attributes on your script & link tags
-    // requires WebpackEncoreBundle 1.4 or higher
-    //.enableIntegrityHashes(Encore.isProduction())
-
-    // uncomment if you're having problems with a jQuery plugin
-    //.autoProvidejQuery()
 ;
 
 // module.exports = Encore.getWebpackConfig();
@@ -84,5 +81,42 @@ config.resolve.conditionNames = ['browser', 'import', 'svelte'];
 
 // Configure to handle .svelte.ts files
 config.resolve.extensions = ['.mjs', '.js', '.jsx', '.vue', '.ts', '.tsx', '.json', '.svelte', '.svelte.ts'];
+
+// Add loaders for Svelte 5 with TypeScript
+if (!config.module.rules.find(rule => rule.test?.toString().includes('svelte.ts'))) {
+    config.module.rules.push({
+        test: /\.svelte\.ts$/,
+        use: [
+            'svelte-loader',
+            { 
+                loader: 'ts-loader', 
+                options: { 
+                    transpileOnly: true 
+                } 
+            }
+        ],
+    });
+}
+
+// Make sure we don't process .svelte.ts files twice
+if (!config.module.rules.find(rule => rule.test?.toString().includes('(?<!\.svelte)\.ts$'))) {
+    config.module.rules.push({
+        test: /(?<!\.svelte)\.ts$/,
+        loader: 'ts-loader',
+        options: {
+            transpileOnly: true,
+        }
+    });
+}
+
+// Required to prevent errors from Svelte on Webpack 5+
+if (!config.module.rules.find(rule => rule.test?.toString().includes('node_modules\/svelte\/.*\.mjs$'))) {
+    config.module.rules.push({
+        test: /node_modules\/svelte\/.*\.mjs$/,
+        resolve: {
+            fullySpecified: false
+        }
+    });
+}
 
 module.exports = config;

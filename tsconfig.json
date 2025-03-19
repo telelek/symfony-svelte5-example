@@ -16,7 +16,10 @@
     "declaration": false,
     "noImplicitAny": false,
     "jsx": "preserve",
-    "lib": ["esnext", "dom", "dom.iterable"]
+    "lib": ["esnext", "dom", "dom.iterable"],
+    "useDefineForClassFields": true,
+    "allowImportingTsExtensions": true,
+    "noEmit": true,
   },
   "include": [
     "./assets/**/*.ts",

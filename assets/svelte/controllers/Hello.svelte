@@ -1,5 +1,5 @@
 <script>
-    export let name = "Svelte";
+  const { name } = $props();
 </script>
 
 <div>Hello {name}</div>
